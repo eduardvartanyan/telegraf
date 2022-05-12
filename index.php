@@ -15,9 +15,9 @@ function add(string $title, string $text, array &$array) : void
 function remove(int $index, array &$array) : bool
 {
 
-    if (array_key_exists($index, $array)) {
+    if (array_key_exists($index, $array)) { // Если индекс существует
 
-        unset($array[$index]);
+        unset($array[$index]); // удаляем элемент
 
         return true;
 
@@ -31,8 +31,9 @@ function remove(int $index, array &$array) : bool
 function edit(int $index, string $title, string $text, array &$array) : bool
 {
 
-    if (array_key_exists($index, $array)) {
+    if (array_key_exists($index, $array)) { // Если индекс существует
 
+        // Заменяем текст и заголовок
         $array[$index]['title'] = $title;
         $array[$index]['text'] = $text;
 
