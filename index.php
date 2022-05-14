@@ -1,64 +1,73 @@
 <?php
 
-// Функция добавляет текст в массив
-function add(string $title, string $text, array &$array) : void
-{
+class TelegraphText {
 
-    $array[] = [
-        'title' => $title,
-        'text' =>  $text,
-    ];
+    private $title, $text, $author, $published, $slug;
 
-}
+    public function __construct(string $author, string $slug)
+    {
 
-// Функция удаляет текст с указанным индексом из массива
-function remove(int $index, array &$array) : bool
-{
-
-    if (array_key_exists($index, $array)) { // Если индекс существует
-
-        unset($array[$index]); // удаляем элемент
-
-        return true;
+        $this->author = $author;
+        $this->slug = $slug;
+        $this->published = date('d.m.Y H:i:s');
 
     }
 
-    return false;
+    public function storeText()
+    {
 
-}
+        $textInArray = [
+            'text' => $this->text,
+            'title' => $this->title,
+            'author' => $this->author,
+            'published' => $this->published,
+        ];
+        $textInString = serialize($textInArray);
+        $path = 'texts/' . $this->slug . '.txt';
 
-// Функция заменяет текст и его закголовок по указанному индексу
-function edit(int $index, string $title, string $text, array &$array) : bool
-{
-
-    if (array_key_exists($index, $array)) { // Если индекс существует
-
-        // Заменяем текст и заголовок
-        $array[$index]['title'] = $title;
-        $array[$index]['text'] = $text;
-
-        return true;
+        file_put_contents($path, $textInString);
 
     }
 
-    return false;
+    public function loadText() : string
+    {
+
+        $path = 'texts/' . $this->slug . '.txt';
+
+        if (file_exists($path)) {
+
+            $textInString = file_get_contents($path);
+            $textInArray = unserialize($textInString);
+            $this->text = $textInArray['text'];
+            $this->title = $textInArray['title'];
+            $this->author = $textInArray['author'];
+            $this->published = $textInArray['published'];
+
+            if (isset($this->text)) {
+
+                return $this->text;
+
+            }
+
+            return 'Текст не задан.';
+
+        }
+
+        return 'Текст еще не сохранялся в файл.';
+
+    }
+
+    public function editText(string $title, string $text) : void
+    {
+
+        $this->title = $title;
+        $this->text = $text;
+
+    }
 
 }
 
-$textStorage = []; // создание массива, где будут храниться тексты
-
-
-// Добавление текстов
-add('title1', 'text1', $textStorage);
-add('title2', 'text2', $textStorage);
-
-
-// Удаление текстов
-var_dump(remove(0, $textStorage));
-var_dump(remove(5, $textStorage));
-print_r($textStorage);
-
-// Редактирование текстов
-var_dump(edit(1, 'title3', 'text3', $textStorage));
-var_dump(edit(5, 'title4', 'text4', $textStorage));
-print_r($textStorage);
+$testText = new TelegraphText('Eduard Vartanyan', 'test-text');
+$testText->editText('Пупиен', 'Марк Клодий Пупиен Максим (лат. Marcus Clodius Pupienus Maximus), более известный в римской историографии как Пупиен, — римский император, правивший в 238 году.');
+$testText->storeText();
+echo $testText->loadText();
