@@ -1,5 +1,24 @@
 <?php
 
+define('LOG_FILE_PATH', 'log.txt');
+define('CALLBACK_FILE_PATH', 'callback.txt');
+
+interface LoggerInterface {
+
+    public function logMessage(string $message);
+
+    public function lastMessages(int $count) : array;
+
+}
+
+interface EventListenerInterface {
+
+    public function attachEvent(string $eventFunctionName, string $callbackFunctionName);
+
+    public function detouchEvent(string $eventFunctionName);
+
+}
+
 class Text {
 
     public $title, $text, $author, $published, $slug;
@@ -52,18 +71,131 @@ class Text {
 
 }
 
-abstract class Storage {
+class Storage implements LoggerInterface, EventListenerInterface {
 
-    abstract public function create(&$text);
+    public function create(&$text)
+    {
 
-    abstract public function read($textId);
+    }
 
-    abstract public function update($textId, $newText);
+    public function read($textId)
+    {
 
-    abstract public function delete($textId);
+    }
 
-    abstract public function list();
+    public function update($textId, $newText)
+    {
 
+    }
+
+    public function delete($textId)
+    {
+
+    }
+
+    public function list()
+    {
+
+    }
+
+    public function logMessage(string $message)
+    {
+        $textInArray = [];
+
+        if (file_exists(LOG_FILE_PATH)) {
+
+            $textInString = file_get_contents(LOG_FILE_PATH);
+            $textInArray = unserialize($textInString);
+
+        }
+
+        $textInArray[] = [
+            'date' => date('d.m.Y H:i:s'),
+            'text' => $message,
+        ];
+        $textInString = serialize($textInArray);
+        file_put_contents(LOG_FILE_PATH, $textInString);
+    }
+
+    public function lastMessages(int $count): array
+    {
+        $textInArray = [];
+
+        if (file_exists(LOG_FILE_PATH)) {
+
+            $textInString = file_get_contents(LOG_FILE_PATH);
+            $textInArray = unserialize($textInString);
+
+        }
+
+        $resultArray = $textInArray;
+
+        if ($count < count($textInArray)) {
+
+            $resultArray = [];
+
+            for ($i = count($textInArray) - $count; $i < count($textInArray); $i++) {
+
+                $resultArray[] = $textInArray[$i];
+
+            }
+
+        }
+
+        return $resultArray;
+
+    }
+
+    public function attachEvent(string $eventFunctionName, string $callbackFunctionName)
+    {
+
+        $textInArray = [];
+
+        if (file_exists(CALLBACK_FILE_PATH)) {
+
+            $textInString = file_get_contents(CALLBACK_FILE_PATH);
+            $textInArray = unserialize($textInString);
+
+        }
+
+        $textInArray[] = [
+            'eventFunctionName' => $eventFunctionName,
+            'callbackFunctionName' => $callbackFunctionName,
+        ];
+
+        $textInString = serialize($textInArray);
+        file_put_contents(CALLBACK_FILE_PATH, $textInString);
+
+    }
+
+    public function detouchEvent(string $eventFunctionName)
+    {
+
+        if (file_exists(CALLBACK_FILE_PATH)) {
+
+            $textInString = file_get_contents(CALLBACK_FILE_PATH);
+            $textInArray = unserialize($textInString);
+
+            if (count($textInArray) > 0) {
+
+                foreach ($textInArray as $key=>$functions) {
+
+                    if ($functions['eventFunctionName'] == $eventFunctionName) {
+
+                        unset($textInArray[$key]);
+
+                    }
+
+                }
+
+            }
+
+            $textInString = serialize($textInArray);
+            file_put_contents(CALLBACK_FILE_PATH, $textInString);
+
+        }
+
+    }
 }
 
 abstract class View {
@@ -83,12 +215,66 @@ abstract class View {
 
 }
 
-abstract class User {
+class User implements EventListenerInterface {
 
     public $id, $name, $role;
 
-    abstract public function getTextsToEdit();
+    public function getTextsToEdit() {
 
+
+
+    }
+
+    public function attachEvent(string $eventFunctionName, string $callbackFunctionName)
+    {
+
+        $textInArray = [];
+
+        if (file_exists(CALLBACK_FILE_PATH)) {
+
+            $textInString = file_get_contents(CALLBACK_FILE_PATH);
+            $textInArray = unserialize($textInString);
+
+        }
+
+        $textInArray[] = [
+            'eventFunctionName' => $eventFunctionName,
+            'callbackFunctionName' => $callbackFunctionName,
+        ];
+
+        $textInString = serialize($textInArray);
+        file_put_contents(CALLBACK_FILE_PATH, $textInString);
+
+    }
+
+    public function detouchEvent(string $eventFunctionName)
+    {
+
+        if (file_exists(CALLBACK_FILE_PATH)) {
+
+            $textInString = file_get_contents(CALLBACK_FILE_PATH);
+            $textInArray = unserialize($textInString);
+
+            if (count($textInArray) > 0) {
+
+                foreach ($textInArray as $key=>$functions) {
+
+                    if ($functions['eventFunctionName'] == $eventFunctionName) {
+
+                        unset($textInArray[$key]);
+
+                    }
+
+                }
+
+            }
+
+            $textInString = serialize($textInArray);
+            file_put_contents(CALLBACK_FILE_PATH, $textInString);
+
+        }
+
+    }
 }
 
 // Класс содердит методы, позволяющий работать с хранилищем файлов
@@ -128,6 +314,8 @@ class FileStorage extends Storage {
         $text->slug = $newSlug; // Обновляем slug текста с учетом даты и индекса
         file_put_contents($path, $textInString);
 
+        $this->logMessage('Текст сохранен в файл ' . $newSlug . '.txt');
+
         return $newSlug; // Метод возвращаем актуальное имя файла, куда сохранен текст
 
     }
@@ -144,6 +332,10 @@ class FileStorage extends Storage {
             $textInArray = unserialize($textInString);
             $text = new Text($textInArray['author'], $textId);
             $text->editText($textInArray['title'], $textInArray['text'], $textInArray['published']);
+
+            $count = 3;
+            echo 'Последние ' . $count . ' сообщений логов:' . PHP_EOL;
+            print_r($this->lastMessages($count));
 
             return $text;
 
