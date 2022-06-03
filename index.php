@@ -19,22 +19,104 @@ interface EventListenerInterface {
 
 }
 
-class Text {
+class TelegraphText {
 
-    public $title, $text, $author, $published, $slug;
+    private $title, $text, $author, $published, $slug;
 
     // Конструктор класса устанавливает для текста автора и имя файла (без расширения)
     public function __construct(string $author, string $slug)
     {
 
+        $this->title = 'Untitled';
         $this->author = $author;
         $this->slug = $slug;
-        $this->published = date('d.m.Y H:i:s');
+        $this->published = date('d.m.Y');
+
+    }
+
+    public function __set($name, $value)
+    {
+
+        if ($name == 'author') {
+
+            if (strlen($value) >= 120) {
+
+                echo 'Ошибка: Имя автора не должно превышать 120 символов.' . PHP_EOL;
+
+                return;
+
+            }
+
+            $this->author = $value;
+
+        } elseif ($name == 'slug') {
+
+            if (preg_match("/^([a-zA-Z0-9-_\/]*)$/i", $value)) {
+
+                $this->slug = $value;
+
+            } else {
+
+                echo 'Ошибка: Имя файла должно содержать только буквы латинского алфавита, цифры и символы —_/.' . PHP_EOL;
+
+            }
+
+        } elseif ($name == 'published') {
+
+            if (date_create_from_format('d.m.Y', $value) >= date_create_from_format('d.m.Y', date('d.m.Y'))) {
+
+                echo 'Дата корректная';
+
+                $this->published = $value;
+
+            } else {
+
+                echo 'Ошибка: Дата должна быть больше или равна текущей даты.' . PHP_EOL;
+
+            }
+
+        } elseif ($name == 'text') {
+
+            $this->text = $value;
+            $this->storeText();
+
+        } elseif ($name == 'title') {
+
+            $this->title = $value;
+
+        }
+
+    }
+
+    public function __get($name)
+    {
+
+        if ($name == 'author') {
+
+            return $this->author;
+
+        } elseif ($name == 'slug') {
+
+            return $this->slug;
+
+        } elseif ($name == 'published') {
+
+            return $this->published;
+
+        } elseif ($name == 'text') {
+
+            return $this->loadText();
+
+        } elseif ($name == 'title') {
+
+            return $this->title;
+
+        }
 
     }
 
     // Сохранение текста в файл с использованием метода класса FileStorage
-    public function storeText()
+    private function storeText()
     {
 
         $file = new FileStorage();
@@ -44,13 +126,22 @@ class Text {
     }
 
     // Загрузка текста из файла с использованием метода класса FileStorege
-    public function loadText() : string
+    private function loadText() : string
     {
 
         $file = new FileStorage();
-        $loadedText = $file->read($this->slug);
 
-        return $loadedText->text; // Возвращает загруженный текст
+        if (file_exists('texts/' . $this->slug . '.txt')) {
+
+            $loadedText = $file->read($this->slug);
+
+            return $loadedText->text; // Возвращает загруженный текст
+
+        } else {
+
+            return $this->text;
+
+        }
 
     }
 
@@ -217,7 +308,7 @@ abstract class View {
 
 class User implements EventListenerInterface {
 
-    public $id, $name, $role;
+    protected $id, $name, $role;
 
     public function getTextsToEdit() {
 
@@ -330,7 +421,7 @@ class FileStorage extends Storage {
 
             $textInString = file_get_contents($path);
             $textInArray = unserialize($textInString);
-            $text = new Text($textInArray['author'], $textId);
+            $text = new TelegraphText($textInArray['author'], $textId);
             $text->editText($textInArray['title'], $textInArray['text'], $textInArray['published']);
 
             $count = 3;
@@ -412,7 +503,6 @@ class FileStorage extends Storage {
 
 }
 
-$testText = new Text('Eduard Vartanyan', 'test-text');
-$testText->editText('Пупиен', 'Марк Клодий Пупиен Максим (лат. Marcus Clodius Pupienus Maximus), более известный в римской историографии как Пупиен, — римский император, правивший в 238 году.');
-echo $testText->storeText() . PHP_EOL;
-echo $testText->loadText();
+$testText = new TelegraphText('Eduard Vartanyan', 'test-text');
+$testText->text = 'Марк Клодий Пупиен Максим (лат. Marcus Clodius Pupienus Maximus), более известный в римской историографии как Пупиен, — римский император, правивший в 238 году.';
+echo $testText->text;
