@@ -1,1 +1,0 @@
-a:4:{s:4:"text";s:261:"Марк Клодий Пупиен Максим (лат. Marcus Clodius Pupienus Maximus), более известный в римской историографии как Пупиен, — римский император, правивший в 238 году.";s:5:"title";s:8:"Untitled";s:6:"author";s:16:"Eduard Vartanyan";s:9:"published";s:10:"20.06.2022";}

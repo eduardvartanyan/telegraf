@@ -11,3 +11,5 @@ function loaderEntities($className)
 }
 
 spl_autoload_register('loaderEntities');
+
+require_once 'vendor/autoload.php';

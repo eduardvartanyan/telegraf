@@ -1,5 +1,10 @@
 <?php
 
+class TelegraphTextException extends Exception {
+
+}
+
+
 class TelegraphText {
 
     private $title, $text, $author, $published, $slug;
@@ -58,8 +63,22 @@ class TelegraphText {
 
         } elseif ($name == 'text') {
 
-            $this->text = $value;
-            $this->storeText();
+            $strLength = strlen($value);
+
+            if ($strLength < 1) {
+
+                throw new TelegraphTextException('Пустое сообщение');
+
+            } elseif ($strLength > 500) {
+
+                throw new TelegraphTextException('Слишком длинное сообщение (более 500 символов)');
+
+            } else {
+
+                $this->text = $value;
+                $this->storeText();
+
+            }
 
         } elseif ($name == 'title') {
 
